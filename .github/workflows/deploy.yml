@@ -1,0 +1,57 @@
+#GITHUB ACTIONS CI CD
+name: Deploy to Render
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend to Docker Hub and Trigger Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t abdelazizkazoum/irecruit_app:irecruit_backend -f ./server/Dockerfile.prod ./server
+          docker push abdelazizkazoum/irecruit_app:irecruit_backend
+
+      - name: Trigger Backend Deployment on Render
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-csmi5j3tq21c73aj0j60?key=W1N3-WpWioU"
+
+  deploy-frontend:
+    name: Deploy Frontend to Docker Hub and Trigger Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t abdelazizkazoum/irecruit_app:irecruit_frontend -f ./client/Dockerfile ./client
+          docker push abdelazizkazoum/irecruit_app:irecruit_frontend
+
+      - name: Trigger Frontend Deployment on Render
+        run: |
+          curl -X POST "https://api.render.com/deploy/srv-csmi0n5umphs73aim1og?key=BzL8O_Lo8rE"
