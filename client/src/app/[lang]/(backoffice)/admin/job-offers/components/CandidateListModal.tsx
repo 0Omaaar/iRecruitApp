@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
-import { Briefcase, Eye, Filter, Mail } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Briefcase, Eye, Filter, Mail, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CandidateDetailView } from "./CandidateDetailView";
-import { CandidateProfile, MOCK_CANDIDATES } from "./types";
+import { CandidateProfile } from "./types";
 import { Tranche } from "@/types/tranche.types";
+import { useApplicationStore } from "@/stores/useApplication.store";
 
 interface CandidateListModalProps {
   tranche: Tranche;
@@ -31,6 +33,43 @@ export function CandidateListModal({
 }: CandidateListModalProps) {
   const [selectedCandidate, setSelectedCandidate] =
     useState<CandidateProfile | null>(null);
+
+  const { fetchApplicationsByTranche, trancheApplications, loading } =
+    useApplicationStore();
+
+  useEffect(() => {
+    if (isOpen && tranche?._id) {
+      fetchApplicationsByTranche(tranche._id);
+    }
+  }, [isOpen, tranche, fetchApplicationsByTranche]);
+
+  // Map API data to UI format
+  const candidates: CandidateProfile[] = (trancheApplications || []).map(
+    (app: any) => ({
+      _id: app._id,
+      // Safely access statut.en or use a default
+      status: app.statut?.en || "Pending",
+      appliedDate: app.recuCandidature,
+      personalInformation: app.user?.candidature?.personalInformation || {
+        prenom: "Unknown",
+        nom: "Candidate",
+        prenomAr: "",
+        nomAr: "",
+        email: app.user?.email || "",
+        cin: "",
+        dateNaissance: "",
+        situation: "",
+        telephone: "",
+        adresse: "",
+        files: { cvPdf: "", cinPdf: "", bacPdf: "" },
+      },
+      professionalInformation: app.user?.candidature
+        ?.professionalInformation || {
+        parcoursEtDiplomes: [],
+        niveauxLangues: [],
+      },
+    }),
+  );
 
   // If a candidate is selected, show the detail view instead of the list
   if (selectedCandidate) {
@@ -55,7 +94,7 @@ export function CandidateListModal({
             Candidates Application List
           </DialogTitle>
           <DialogDescription>
-            Review and manage the {MOCK_CANDIDATES.length} applications for this
+            Review and manage the {candidates.length} applications for this
             tranche.
           </DialogDescription>
         </DialogHeader>
@@ -69,67 +108,81 @@ export function CandidateListModal({
               </Button>
             </div>
 
-            <div className="grid gap-3">
-              {MOCK_CANDIDATES.map((candidate) => (
-                <div
-                  key={candidate._id}
-                  className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
-                  onClick={() => setSelectedCandidate(candidate)}
-                >
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-10 w-10 border">
-                      <AvatarImage
-                        src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate.personalInformation.prenom} ${candidate.personalInformation.nom}`}
-                      />
-                      <AvatarFallback>
-                        {candidate.personalInformation.prenom[0]}
-                        {candidate.personalInformation.nom[0]}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-base">
-                          {candidate.personalInformation.prenom}{" "}
-                          {candidate.personalInformation.nom}
-                        </h4>
-                        <Badge
-                          variant="outline"
-                          className={`capitalize text-[10px] h-5 px-1.5 border ${
-                            candidate.status === "accepted"
-                              ? "bg-green-500 text-white border-transparent"
-                              : candidate.status === "rejected"
-                              ? "bg-orange-500 text-white border-transparent"
-                              : "bg-yellow-50 text-yellow-800 border-yellow-400"
-                          }`}
-                        >
-                          {candidate.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />{" "}
-                          {candidate.personalInformation.email}
-                        </span>
-                        <span>•</span>
-                        <span>
-                          Applied:{" "}
-                          {new Date(candidate.appliedDate).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {candidates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No applications found for this tranche.
                   </div>
+                ) : (
+                  candidates.map((candidate) => (
+                    <div
+                      key={candidate._id}
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => setSelectedCandidate(candidate)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10 border">
+                          <AvatarImage
+                            src={`https://api.dicebear.com/7.x/initials/svg?seed=${candidate.personalInformation.prenom} ${candidate.personalInformation.nom}`}
+                          />
+                          <AvatarFallback>
+                            {candidate.personalInformation.prenom?.[0]}
+                            {candidate.personalInformation.nom?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-base">
+                              {candidate.personalInformation.prenom}{" "}
+                              {candidate.personalInformation.nom}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className={`capitalize text-[10px] h-5 px-1.5 border ${
+                                candidate.status === "accepted"
+                                  ? "bg-green-500 text-white border-transparent"
+                                  : candidate.status === "rejected"
+                                    ? "bg-orange-500 text-white border-transparent"
+                                    : "bg-yellow-50 text-yellow-800 border-yellow-400"
+                              }`}
+                            >
+                              {candidate.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />{" "}
+                              {candidate.personalInformation.email}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              Applied:{" "}
+                              {new Date(
+                                candidate.appliedDate,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="opacity-0 group-hover:opacity-100"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>

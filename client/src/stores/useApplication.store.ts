@@ -3,6 +3,7 @@
 import clientApi from "@/libs/clientApi";
 import { ApplicationType, OfferType } from "@/types/application.types";
 import { ActiveTranche } from "@/types/tranche.types"; // Active tranche context for applications.
+import { applicationService } from "@/services/applicationService";
 import { toast } from "react-toastify";
 import { create } from "zustand";
 
@@ -11,6 +12,7 @@ export interface ApplicationStoreState {
   selectedOffer: OfferType | null;
   selectedTranche: ActiveTranche | null; // Active tranche selected by the candidate.
   applications: ApplicationType[] | null;
+  trancheApplications: any[] | null;
   loading: boolean;
   error: string;
 
@@ -19,6 +21,7 @@ export interface ApplicationStoreState {
   setTranche: (data: ActiveTranche) => void; // Store tranche context for the apply flow.
   submitApplication: (data: ApplicationType) => Promise<string>;
   fetchApplications: () => Promise<string>;
+  fetchApplicationsByTranche: (trancheId: string) => Promise<void>;
 }
 
 export const useApplicationStore = create<ApplicationStoreState>((set) => ({
@@ -26,6 +29,7 @@ export const useApplicationStore = create<ApplicationStoreState>((set) => ({
   selectedOffer: null,
   selectedTranche: null, // Initialize tranche state as empty.
   applications: null,
+  trancheApplications: null,
   loading: false,
   error: "",
 
@@ -95,6 +99,20 @@ export const useApplicationStore = create<ApplicationStoreState>((set) => ({
         error: "Failed to submit. Please try again.",
       });
       return "error";
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchApplicationsByTranche: async (trancheId: string) => {
+    set({ loading: true, error: "" });
+    try {
+      const data = await applicationService.getApplicationsByTranche(trancheId);
+      set({ trancheApplications: data });
+    } catch (error) {
+      console.error("Error fetching tranche applications", error);
+      set({ error: "Failed to fetch applications" });
+      toast.error("Failed to fetch applications");
     } finally {
       set({ loading: false });
     }
