@@ -42,7 +42,7 @@ const List = ({
   title?: string;
 }) => {
   const headers = fields.map(
-    (field: any) => field.label && field.label[locale]
+    (field: any) => field.label && field.label[locale],
   );
 
   return (
@@ -94,7 +94,7 @@ const List = ({
                                 </Button>
                               </div>
                             </td>
-                          )
+                          ),
                         )
                       ) : (
                         <td
@@ -103,7 +103,7 @@ const List = ({
                         >
                           {String(value)}
                         </td>
-                      )
+                      ),
                     )}
                   </tr>
                 ))}

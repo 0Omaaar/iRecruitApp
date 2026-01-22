@@ -94,7 +94,7 @@ export default function JobOfferRecruitmentManager({
       acc +
       session.tranches.reduce(
         (tAcc, tranche) => tAcc + (tranche.currentCandidates || 0),
-        0
+        0,
       )
     );
   }, 0);

@@ -9,8 +9,6 @@ import {
   ChevronDown,
   Download,
   FileText,
-  GraduationCap,
-  Languages,
   Mail,
   MapPin,
   Phone,
@@ -23,7 +21,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +56,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/libs/utils";
+import QualificationsLists from "@/components/profile/profile-page/QualificationsLists";
+import { getDictionary } from "@/utils/getDictionaryClient";
 
 interface CandidateDetailViewProps {
   candidate: CandidateProfile;
@@ -71,18 +70,28 @@ export function CandidateDetailView({
   onBack,
   onClose,
 }: CandidateDetailViewProps) {
-  const { personalInformation: pi, professionalInformation: prof } = candidate;
+  const { personalInformation: pi } = candidate;
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const [dictionary, setDictionary] = useState<any>(null);
+
+  useEffect(() => {
+    // Fetch dictionary for 'en' locale as default
+    const fetchDict = async () => {
+      const dict = await getDictionary("en");
+      setDictionary(dict);
+    };
+    fetchDict();
+  }, []);
 
   const handleAcceptConfirm = (data: any) => {
     console.log(
       `Accepted candidate ${candidate._id}. Interview Details:`,
-      data
+      data,
     );
     alert(
       `Candidate Accepted! Interview scheduled on ${
         data.date ? format(data.date, "PPP") : "N/A"
-      } at ${data.time}.\n\nEmail sent to ${pi.email}`
+      } at ${data.time}.\n\nEmail sent to ${pi.email}`,
     );
     // TODO: Call backend to update status and send email
   };
@@ -116,10 +125,10 @@ export function CandidateDetailView({
           Added [&>button]:hidden to hide the default top-right close button 
           to prevent overlap with our custom header.
       */}
-        <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
+        <DialogContent className="max-w-full w-full h-[100dvh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden rounded-none">
           {/* Header */}
-          <div className="h-16 px-6 border-b bg-background flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-4">
+          <div className="h-16 px-4 md:px-6 border-b bg-background flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 md:gap-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -129,48 +138,60 @@ export function CandidateDetailView({
                 <ChevronDown className="h-4 w-4 rotate-90" />
                 <span className="hidden sm:inline">Back</span>
               </Button>
-              <Separator orientation="vertical" className="h-6" />
+              <Separator
+                orientation="vertical"
+                className="h-6 hidden sm:block"
+              />
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">
+                <span className="font-semibold text-sm hidden sm:inline">
                   Application Review
                 </span>
                 <Badge
                   variant="outline"
                   className="text-xs font-normal text-muted-foreground"
                 >
-                  ID: {candidate._id.toUpperCase()}
+                  <span className="inline sm:hidden">#</span>
+                  <span className="hidden sm:inline">ID:</span>{" "}
+                  {candidate._id.toUpperCase().slice(0, 8)}
                 </Badge>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {/* Decision Actions */}
               <div className="flex items-center bg-muted/50 p-1 rounded-md gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 px-3 text-muted-foreground hover:text-orange-600 hover:bg-orange-50 transition-all font-medium"
+                  className="h-8 px-2 md:px-3 text-muted-foreground hover:text-orange-600 hover:bg-orange-50 transition-all font-medium"
                   onClick={() => handleStatusChange("rejected")}
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  Reject
+                  <X className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Reject</span>
                 </Button>
                 <Separator orientation="vertical" className="h-4" />
                 <Button
                   size="sm"
-                  className="h-8 px-3 bg-green-600 text-white hover:bg-green-700 shadow-sm transition-all font-medium"
+                  className="h-8 px-2 md:px-3 bg-green-600 text-white hover:bg-green-700 shadow-sm transition-all font-medium"
                   onClick={() => handleStatusChange("accepted")}
                 >
-                  <Check className="h-4 w-4 mr-2" />
-                  Accept
+                  <Check className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Accept</span>
                 </Button>
               </div>
 
-              <Separator orientation="vertical" className="h-6 mx-1" />
+              <Separator
+                orientation="vertical"
+                className="h-6 mx-1 hidden sm:block"
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 hidden sm:flex"
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -194,15 +215,15 @@ export function CandidateDetailView({
 
           <div className="flex flex-col md:flex-row h-full overflow-hidden">
             {/* Left Sidebar: Personal Info */}
-            <div className="w-full md:w-80 border-r bg-muted/5 p-6 overflow-y-auto shrink-0">
+            <div className="w-full md:w-80 border-r bg-muted/5 p-4 md:p-6 overflow-y-auto shrink-0 max-h-[35vh] md:max-h-full border-b md:border-b-0">
               <div className="flex flex-col items-center text-center mb-6">
-                <Avatar className="h-24 w-24 mb-4 border-4 border-background shadow-sm">
+                <Avatar className="h-20 w-20 md:h-24 md:w-24 mb-4 border-4 border-background shadow-sm">
                   <AvatarImage
                     src={`https://api.dicebear.com/7.x/initials/svg?seed=${pi.prenom} ${pi.nom}`}
                   />
                   <AvatarFallback className="text-2xl">
-                    {pi.prenom[0]}
-                    {pi.nom[0]}
+                    {pi.prenom?.[0]}
+                    {pi.nom?.[0]}
                   </AvatarFallback>
                 </Avatar>
                 <h2 className="text-xl font-bold">
@@ -214,7 +235,7 @@ export function CandidateDetailView({
                 <Badge
                   variant="outline"
                   className={`mt-2 capitalize ${getStatusBadgeClasses(
-                    candidate.status
+                    candidate.status,
                   )}`}
                 >
                   {candidate.status}
@@ -230,12 +251,30 @@ export function CandidateDetailView({
                 <InfoItem
                   icon={<CalendarIcon className="h-4 w-4" />}
                   label="Born"
-                  value={new Date(pi.dateNaissance).toLocaleDateString()}
+                  value={
+                    pi.dateNaissance
+                      ? new Date(pi.dateNaissance).toLocaleDateString()
+                      : "N/A"
+                  }
                 />
                 <InfoItem
                   icon={<Users className="h-4 w-4" />}
                   label="Status"
                   value={pi.situation}
+                />
+                <InfoItem
+                  icon={<UserIcon className="h-4 w-4" />}
+                  label="Civil Servant"
+                  value={pi.experiences?.fonctionnaire ? "Yes" : "No"}
+                />
+                <InfoItem
+                  icon={<Users className="h-4 w-4" />}
+                  label="Disability Status"
+                  value={
+                    pi.situationDeHandicap?.handicap
+                      ? `Yes (${pi.situationDeHandicap.typeHandicap || "Not specified"})`
+                      : "No"
+                  }
                 />
                 <InfoItem
                   icon={<Phone className="h-4 w-4" />}
@@ -257,95 +296,80 @@ export function CandidateDetailView({
               <Separator className="my-6" />
 
               <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Documents
+                <FileText className="h-4 w-4" /> Core Documents
               </h3>
               <div className="space-y-2">
-                <FileLink label="CV" filename={pi.files.cvPdf} />
-                <FileLink label="CIN Scanned" filename={pi.files.cinPdf} />
-                <FileLink label="Baccalaureate" filename={pi.files.bacPdf} />
+                <FileLink label="CV" filename={pi.files?.cvPdf} />
+                <FileLink label="CIN Scanned" filename={pi.files?.cinPdf} />
+                <FileLink label="Baccalaureate" filename={pi.files?.bacPdf} />
+              </div>
+
+              <Separator className="my-6" />
+
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Application Documents
+              </h3>
+              <div className="space-y-2">
+                <FileLink
+                  label="Declaration"
+                  filename={candidate.attachment?.declarationPdf}
+                />
+                <FileLink
+                  label="Motivation Letter"
+                  filename={candidate.attachment?.motivationLetterPdf}
+                />
               </div>
             </div>
 
             {/* Right Content: Professional Info */}
-            <ScrollArea className="flex-1 bg-background">
-              <div className="p-8 pb-20">
-                <Tabs defaultValue="education" className="w-full">
-                  <TabsList className="mb-6">
-                    <TabsTrigger value="education">
-                      Education & Diplomas
+            <ScrollArea className="flex-1 bg-background h-full">
+              <div className="p-4 md:p-8 pb-20">
+                <Tabs defaultValue="professional" className="w-full">
+                  <TabsList className="mb-6 w-full flex-wrap h-auto justify-start bg-muted/50 p-1">
+                    <TabsTrigger
+                      value="professional"
+                      className="flex-1 sm:flex-none"
+                    >
+                      Professional Information
                     </TabsTrigger>
-                    <TabsTrigger value="languages">Languages</TabsTrigger>
-                    <TabsTrigger value="experience">
-                      Experience & Research
+                    <TabsTrigger
+                      value="documents"
+                      className="flex-1 sm:flex-none"
+                    >
+                      Documents
                     </TabsTrigger>
                   </TabsList>
 
-                  {/* Education Tab */}
-                  <TabsContent value="education" className="space-y-6">
+                  {/* Professional Info Tab */}
+                  <TabsContent value="professional" className="space-y-6">
+                    {dictionary && (
+                      <QualificationsLists
+                        locale="en"
+                        candidatureData={{
+                          // Construct a partial CandidatureType matching what QualificationLists expects
+                          personalInformation:
+                            candidate.personalInformation as any,
+                          professionalInformation:
+                            candidate.professionalInformation as any,
+                        }}
+                        dictionary={dictionary}
+                      />
+                    )}
+                  </TabsContent>
+
+                  {/* Documents Tab */}
+                  <TabsContent value="documents">
                     <div>
                       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <GraduationCap className="h-5 w-5 text-primary" />
-                        Academic Background
+                        <FileText className="h-5 w-5 text-primary" />
+                        Additional Documents
                       </h3>
-
-                      <div className="space-y-4">
-                        {prof.parcoursEtDiplomes?.map((diploma, idx) => (
-                          <Card key={idx}>
-                            <CardContent className="p-4 flex flex-col md:flex-row justify-between gap-4">
-                              <div>
-                                <h4 className="font-bold text-base">
-                                  {diploma.intituleDiplome}
-                                </h4>
-                                <p className="text-muted-foreground">
-                                  {diploma.diplomeType} • {diploma.specialite}
-                                </p>
-                                <div className="flex items-center gap-2 mt-2 text-sm">
-                                  <Badge variant="secondary">
-                                    {diploma.anneeObtention}
-                                  </Badge>
-                                  <span className="text-muted-foreground">
-                                    {diploma.etablissement}
-                                  </span>
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="shrink-0 h-9"
-                              >
-                                <Download className="h-3 w-3 mr-2" />
-                                Diploma PDF
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-
-                  {/* Languages Tab */}
-                  <TabsContent value="languages">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Languages className="h-5 w-5 text-primary" />
-                      Languages
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {prof.niveauxLangues?.map((lang, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-4 border rounded-lg"
-                        >
-                          <span className="font-medium">{lang.langue}</span>
-                          <Badge>{lang.niveau}</Badge>
+                      <div className="space-y-2">
+                        {/* Add more document viewers here if needed */}
+                        <div className="text-muted-foreground bg-muted/10 p-4 rounded border border-dashed">
+                          Documents are already listed in the sidebar.
                         </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  {/* Experience Tab (Placeholder based on schema structure) */}
-                  <TabsContent value="experience">
-                    <div className="text-center py-12 text-muted-foreground bg-muted/10 rounded-lg border border-dashed">
-                      <p>No publications or research documents uploaded.</p>
+                      </div>
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -380,7 +404,7 @@ function AcceptCandidateModal({
   candidateName,
 }: AcceptCandidateModalProps) {
   const [invitationType, setInvitationType] = useState<"interview" | "test">(
-    "interview"
+    "interview",
   );
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState("");
@@ -441,7 +465,7 @@ function AcceptCandidateModal({
                     variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
+                      !date && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -534,13 +558,35 @@ const InfoItem = ({
   </div>
 );
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const FileLink = ({ label, filename }: { label: string; filename: string }) => (
-  <div className="flex items-center justify-between p-2 rounded border bg-background text-sm hover:bg-muted/50 transition-colors cursor-pointer">
-    <div className="flex items-center gap-2 truncate">
-      <FileText className="h-3.5 w-3.5 text-blue-500" />
-      <span className="truncate">{label}</span>
+const FileLink = ({ label, filename }: { label: string; filename: string }) => {
+  const handleDownload = () => {
+    // In a real app, you'd trigger a download via an API endpoint
+    // For this example, we'll just log it.
+    console.log(`Downloading ${filename}`);
+    alert(`Simulating download for: ${filename}`);
+  };
+
+  if (!filename) {
+    return (
+      <div className="flex items-center justify-between p-2 rounded border bg-muted/20 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 truncate">
+          <FileText className="h-3.5 w-3.5" />
+          <span className="truncate">{label} (Not provided)</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={handleDownload}
+      className="flex items-center justify-between p-2 rounded border bg-background text-sm hover:bg-muted/50 transition-colors cursor-pointer"
+    >
+      <div className="flex items-center gap-2 truncate">
+        <FileText className="h-3.5 w-3.5 text-blue-500" />
+        <span className="truncate">{label}</span>
+      </div>
+      <Download className="h-3 w-3 text-muted-foreground" />
     </div>
-    <Download className="h-3 w-3 text-muted-foreground" />
-  </div>
-);
+  );
+};
