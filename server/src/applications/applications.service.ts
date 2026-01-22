@@ -119,6 +119,47 @@ export class ApplicationsService {
     }
   }
 
+  // Get applications by tranche with candidate info
+  async findByTranche(trancheId: string): Promise<any[]> {
+    try {
+      const applications = await this.applicationModel
+        .find({ tranche: new Types.ObjectId(trancheId) })
+        .populate('user')
+        .populate('offer')
+        .exec();
+
+      console.log(`Found ${applications.length} applications`);
+
+      if (!applications || applications.length === 0) {
+        return [];
+      }
+
+      const applicationsWithCandidateInfo = await Promise.all(
+        applications.map(async (app) => {
+          const candidature = await this.candidatureModel
+            .findOne({ user: app.user['_id'] })
+            .exec();
+
+          const applicationObj = app.toObject();
+
+          // Attach candidature to the user object
+          if (applicationObj.user && typeof applicationObj.user === 'object') {
+            (applicationObj.user as any).candidature = candidature;
+          }
+
+          return applicationObj;
+        }),
+      );
+
+      return applicationsWithCandidateInfo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Failed to retrieve applications for tranche ${trancheId}`,
+        error.message,
+      );
+    }
+  }
+
   // Update an application
   async update(
     id: string,

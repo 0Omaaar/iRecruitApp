@@ -12,7 +12,7 @@ export class Application {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   user: User;
 
-  @Prop({ type: Types.ObjectId, ref: 'JobOffer', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'JobOffer' })
   offer: JobOffer;
 
   @Prop({

@@ -35,7 +35,7 @@ export class ApplicationsController {
     return this.applicationsService.create(data, files, user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.applicationsService.findAll();
@@ -46,6 +46,12 @@ export class ApplicationsController {
   fetchCandidateApplications(@Request() req) {
     const user = req.user;
     return this.applicationsService.findUserApplication(user);
+  }
+
+  // @UseGuards(JwtAuthGuard)
+  @Get('tranche/:trancheId')
+  findByTranche(@Param('trancheId') trancheId: string) {
+    return this.applicationsService.findByTranche(trancheId);
   }
 
   @Get(':id')
