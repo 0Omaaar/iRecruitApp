@@ -72,4 +72,19 @@ export class ApplicationsController {
   remove(@Param('id') id: string) {
     return this.applicationsService.remove(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/accept')
+  acceptApplication(
+    @Param('id') id: string,
+    @Body('message') message: string,
+  ) {
+    return this.applicationsService.acceptApplication(id, message);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/reject')
+  rejectApplication(@Param('id') id: string) {
+    return this.applicationsService.rejectApplication(id);
+  }
 }

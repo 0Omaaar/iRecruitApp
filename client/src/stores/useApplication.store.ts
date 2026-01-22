@@ -19,6 +19,8 @@ export interface ApplicationStoreState {
   setTranche: (data: ActiveTranche) => void; // Store tranche context for the apply flow.
   submitApplication: (data: ApplicationType) => Promise<string>;
   fetchApplications: () => Promise<string>;
+  acceptApplication: (applicationId: string, message: string) => Promise<string>;
+  rejectApplication: (applicationId: string) => Promise<string>;
 }
 
 export const useApplicationStore = create<ApplicationStoreState>((set, get) => ({
@@ -99,6 +101,46 @@ export const useApplicationStore = create<ApplicationStoreState>((set, get) => (
       set({
         error: "Failed to submit. Please try again.",
       });
+      return "error";
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Accept application
+  acceptApplication: async (applicationId: string, message: string) => {
+    set({ loading: true, error: "" });
+    try {
+      await clientApi.patch(`application/${applicationId}/accept`, { message });
+      toast.success("Application accepted and email sent!");
+      return "success";
+    } catch (error) {
+      console.error("Error accepting application", error);
+      set({
+        loading: false,
+        error: "Failed to accept application. Please try again.",
+      });
+      toast.error("Failed to accept application. Please try again.");
+      return "error";
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Reject application
+  rejectApplication: async (applicationId: string) => {
+    set({ loading: true, error: "" });
+    try {
+      await clientApi.patch(`application/${applicationId}/reject`);
+      toast.success("Application rejected!");
+      return "success";
+    } catch (error) {
+      console.error("Error rejecting application", error);
+      set({
+        loading: false,
+        error: "Failed to reject application. Please try again.",
+      });
+      toast.error("Failed to reject application. Please try again.");
       return "error";
     } finally {
       set({ loading: false });

@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/libs/utils";
 import { downloadFile } from "@/utils/downloadFile"; // File download helper for admin documents.
+import { useApplicationStore } from "@/stores/useApplication.store";
 
 interface CandidateDetailViewProps {
   candidate: CandidateProfile;
@@ -74,7 +75,11 @@ export function CandidateDetailView({
   onClose,
 }: CandidateDetailViewProps) {
   const { personalInformation: pi, professionalInformation: prof } = candidate;
+
+  console.log("Rendering CandidateDetailView for:", candidate);
+
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const { acceptApplication, rejectApplication } = useApplicationStore();
 
   // Normalize optional arrays for consistent rendering in tabs.
   const diplomas = prof.parcoursEtDiplomes || [];
@@ -120,23 +125,34 @@ export function CandidateDetailView({
     window.URL.revokeObjectURL(url);
   };
 
-  const handleAcceptConfirm = (data: any) => {
+  const handleAcceptConfirm = async (data: any) => {
     console.log(
       `Accepted candidate ${candidate._id}. Interview Details:`,
       data
     );
-    alert(
-      `Candidate Accepted! Interview scheduled on ${
-        data.date ? format(data.date, "PPP") : "N/A"
-      } at ${data.time}.\n\nEmail sent to ${pi.email}`
-    );
+    const result = await acceptApplication(candidate._id, data.message);
+    if (result === "success") {
+      alert(
+        `Candidate Accepted! Interview scheduled on ${
+          data.date ? format(data.date, "PPP") : "N/A"
+        } at ${data.time}.\n\nEmail sent to ${pi.email}`
+      );
+      // Optionally refresh or update status
+    }
     // TODO: Call backend to update status and send email
   };
 
-  const handleStatusChange = (status: "accepted" | "rejected") => {
+  const handleStatusChange = async (status: "accepted" | "rejected") => {
     if (status === "accepted") {
       setIsAcceptModalOpen(true);
       return;
+    }
+    if (status === "rejected") {
+      const result = await rejectApplication(candidate._id);
+      if (result === "success") {
+        alert(`Application rejected for ${pi.email}`);
+        // Optionally refresh or update status
+      }
     }
     // TODO: Connect to backend API
     console.log(`Setting candidate ${candidate._id} status to ${status}`);

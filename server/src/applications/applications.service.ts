@@ -14,6 +14,7 @@ import { Candidature } from 'src/schemas/candidature.schema';
 import { FileUploadService } from 'src/common/services/file-upload.service';
 import { UserDocument } from 'src/schemas/user.schema';
 import { Tranche, TrancheDocument } from 'src/schemas/tranche.schema'; // Tranche lookup for session/job offer tagging.
+import { MailerService } from 'src/mailer/mailer.service';
 
 @Injectable()
 export class ApplicationsService {
@@ -28,6 +29,7 @@ export class ApplicationsService {
     private trancheModel: Model<TrancheDocument>, // Tranche model used to validate application context.
 
     private fileUploadService: FileUploadService,
+    private mailerService: MailerService,
   ) {}
 
   // Map localized application status values to the admin UI status tags.
@@ -337,6 +339,101 @@ export class ApplicationsService {
         `Failed to delete application with ID ${id}`,
         error.message,
       );
+    }
+  }
+
+  // Accept an application: mark as received and notify candidate by email
+  async acceptApplication(applicationId: string, message: string): Promise<Application> {
+    try {
+      if (!Types.ObjectId.isValid(applicationId)) {
+        throw new BadRequestException('Invalid application id');
+      }
+
+      const application = await this.applicationModel.findById(applicationId).exec();
+      if (!application) {
+        throw new NotFoundException(`Application with ID ${applicationId} not found`);
+      }
+
+      // Find the candidature linked to the application user
+      const candidature = await this.candidatureModel.findOne({ user: application.user }).exec();
+      if (!candidature) {
+        throw new NotFoundException('Candidature for application user not found');
+      }
+
+      // Localized "accepted" status
+      const acceptedStatut = {
+        ar: 'مقبول',
+        fr: 'Accepté',
+        en: 'Accepted',
+      };
+
+      application.statut = acceptedStatut as any;
+      application.recuCandidature = new Date();
+
+      const updated = await application.save();
+
+      const recipientEmail = candidature.personalInformation?.email;
+      if (!recipientEmail) {
+        throw new NotFoundException('Candidate email not found in candidature');
+      }
+
+      const subject = 'Your application has been received - iRecruit';
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Application Received</h2>
+          <p>${message}</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="color: #999; font-size: 12px;">If you have questions, reply to this email.</p>
+        </div>
+      `;
+
+      try {
+        await this.mailerService.sendEmail(recipientEmail, subject, htmlContent);
+      } catch (mailErr) {
+        console.error('Error sending acceptance email:', mailErr);
+        throw new InternalServerErrorException('Failed to send notification email');
+      }
+
+      return updated;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error accepting application:', error);
+      throw new InternalServerErrorException('Failed to accept application');
+    }
+  }
+
+  // Reject an application: mark as rejected
+  async rejectApplication(applicationId: string): Promise<Application> {
+    try {
+      if (!Types.ObjectId.isValid(applicationId)) {
+        throw new BadRequestException('Invalid application id');
+      }
+
+      const application = await this.applicationModel.findById(applicationId).exec();
+      if (!application) {
+        throw new NotFoundException(`Application with ID ${applicationId} not found`);
+      }
+
+      // Localized "rejected" status
+      const rejectedStatut = {
+        ar: 'مرفوض',
+        fr: 'Rejeté',
+        en: 'Rejected',
+      };
+
+      application.statut = rejectedStatut as any;
+
+      const updated = await application.save();
+
+      return updated;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      console.error('Error rejecting application:', error);
+      throw new InternalServerErrorException('Failed to reject application');
     }
   }
 }
