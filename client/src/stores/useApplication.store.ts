@@ -21,7 +21,7 @@ export interface ApplicationStoreState {
   fetchApplications: () => Promise<string>;
 }
 
-export const useApplicationStore = create<ApplicationStoreState>((set) => ({
+export const useApplicationStore = create<ApplicationStoreState>((set, get) => ({
   applicationData: null,
   selectedOffer: null,
   selectedTranche: null, // Initialize tranche state as empty.
@@ -54,11 +54,16 @@ export const useApplicationStore = create<ApplicationStoreState>((set) => ({
   submitApplication: async (data: ApplicationType) => {
     set({ loading: true, error: "" });
     const { attachment, ...rest } = data; // Destructure to separate files from other data
+    const selectedTranche = get().selectedTranche; // Read tranche context if payload is missing it.
+    const payload = {
+      ...rest,
+      trancheId: rest.trancheId || selectedTranche?._id, // Ensure tranche id is included.
+    };
 
     try {
       const formData = new FormData();
 
-      formData.append("data", JSON.stringify(rest));
+      formData.append("data", JSON.stringify(payload)); // Send payload with tranche id.
 
       Object.entries(attachment).map((item) => {
         const file = item[1] as File;
