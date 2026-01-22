@@ -15,8 +15,7 @@ import { FileUploadService } from 'src/common/services/file-upload.service';
 import { UserDocument } from 'src/schemas/user.schema';
 import { Tranche, TrancheDocument } from 'src/schemas/tranche.schema'; // Tranche lookup for session/job offer tagging.
 import { MailerService } from 'src/mailer/mailer.service';
-import * as fs from 'fs';
-import * as path from 'path';
+
 
 @Injectable()
 export class ApplicationsService {
@@ -391,7 +390,6 @@ export class ApplicationsService {
             body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
             .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
             .header { background-color: #007bff; color: #ffffff; padding: 20px; text-align: center; }
-            .header img { max-width: 150px; height: auto; }
             .header h1 { margin: 10px 0 0 0; font-size: 24px; }
             .content { padding: 30px; color: #333333; line-height: 1.6; }
             .content h2 { color: #007bff; margin-top: 0; }
@@ -404,7 +402,6 @@ export class ApplicationsService {
         <body>
           <div class="container">
             <div class="header">
-              <img src="http://localhost:4000/uploads/logo/logo-ministere.png" alt="iRecruit Logo">
               <h1>iRecruit</h1>
               <p>Recruitment Platform</p>
             </div>
