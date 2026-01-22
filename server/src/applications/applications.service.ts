@@ -15,6 +15,8 @@ import { FileUploadService } from 'src/common/services/file-upload.service';
 import { UserDocument } from 'src/schemas/user.schema';
 import { Tranche, TrancheDocument } from 'src/schemas/tranche.schema'; // Tranche lookup for session/job offer tagging.
 import { MailerService } from 'src/mailer/mailer.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ApplicationsService {
@@ -377,14 +379,54 @@ export class ApplicationsService {
         throw new NotFoundException('Candidate email not found in candidature');
       }
 
-      const subject = 'Your application has been received - iRecruit';
+      const subject = 'Your Application Has Been Accepted - iRecruit';
       const htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Application Received</h2>
-          <p>${message}</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="color: #999; font-size: 12px;">If you have questions, reply to this email.</p>
-        </div>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Application Accepted</title>
+          <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+            .header { background-color: #007bff; color: #ffffff; padding: 20px; text-align: center; }
+            .header img { max-width: 150px; height: auto; }
+            .header h1 { margin: 10px 0 0 0; font-size: 24px; }
+            .content { padding: 30px; color: #333333; line-height: 1.6; }
+            .content h2 { color: #007bff; margin-top: 0; }
+            .message { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #007bff; margin: 20px 0; }
+            .footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #666666; font-size: 14px; }
+            .footer p { margin: 5px 0; }
+            .button { display: inline-block; background-color: #28a745; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <img src="http://localhost:4000/uploads/logo/logo-ministere.png" alt="iRecruit Logo">
+              <h1>iRecruit</h1>
+              <p>Recruitment Platform</p>
+            </div>
+            <div class="content">
+              <h2>Congratulations! Your Application Has Been Accepted</h2>
+              <p>Dear Candidate,</p>
+              <p>We are thrilled to inform you that your application has been accepted! Your profile has been selected for the next stage of our recruitment process.</p>
+              <div class="message">
+                <strong>Message from our team:</strong><br>
+                ${message}
+              </div>
+              <p>Please keep an eye on your email for further instructions regarding the next steps. We look forward to welcoming you to our team!</p>
+              <p>If you have any questions, please don't hesitate to contact us.</p>
+              <a href="mailto:support@irecruit.com" class="button">Contact Support</a>
+            </div>
+            <div class="footer">
+              <p>&copy; 2026 iRecruit. All rights reserved.</p>
+              <p>If you have questions, reply to this email or contact us at support@irecruit.com</p>
+            </div>
+          </div>
+        </body>
+        </html>
       `;
 
       try {
