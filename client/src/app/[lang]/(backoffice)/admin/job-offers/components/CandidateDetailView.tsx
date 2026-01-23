@@ -79,6 +79,7 @@ export function CandidateDetailView({
   console.log("Rendering CandidateDetailView for:", candidate);
 
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const { acceptApplication, rejectApplication } = useApplicationStore();
 
   // Normalize optional arrays for consistent rendering in tabs.
@@ -90,19 +91,19 @@ export function CandidateDetailView({
   const pedagogicalExperiences = Array.isArray(prof.experiencePedagogique)
     ? prof.experiencePedagogique
     : prof.experiencePedagogique
-    ? [prof.experiencePedagogique]
-    : [];
+      ? [prof.experiencePedagogique]
+      : [];
   const residanatEntries = Array.isArray(prof.residanat)
     ? prof.residanat
     : prof.residanat
-    ? [prof.residanat]
-    : [];
+      ? [prof.residanat]
+      : [];
   const otherDocuments = prof.autresDocuments || [];
 
   // Download a file from the backend and trigger a browser save dialog.
   const handleFileDownload = async (
     filePath?: string,
-    fallbackName?: string
+    fallbackName?: string,
   ) => {
     if (!filePath) {
       return;
@@ -128,18 +129,27 @@ export function CandidateDetailView({
   const handleAcceptConfirm = async (data: any) => {
     console.log(
       `Accepted candidate ${candidate._id}. Interview Details:`,
-      data
+      data,
     );
     const result = await acceptApplication(candidate._id, data.message);
     if (result === "success") {
       alert(
         `Candidate Accepted! Interview scheduled on ${
           data.date ? format(data.date, "PPP") : "N/A"
-        } at ${data.time}.\n\nEmail sent to ${pi.email}`
+        } at ${data.time}.\n\nEmail sent to ${pi.email}`,
       );
       // Optionally refresh or update status
     }
     // TODO: Call backend to update status and send email
+  };
+
+  const handleRejectConfirm = async () => {
+    const result = await rejectApplication(candidate._id);
+    if (result === "success") {
+      alert(`Application rejected for ${pi.email}`);
+      // Optionally refresh or update status
+    }
+    setIsRejectModalOpen(false);
   };
 
   const handleStatusChange = async (status: "accepted" | "rejected") => {
@@ -148,26 +158,19 @@ export function CandidateDetailView({
       return;
     }
     if (status === "rejected") {
-      const result = await rejectApplication(candidate._id);
-      if (result === "success") {
-        alert(`Application rejected for ${pi.email}`);
-        // Optionally refresh or update status
-      }
+      setIsRejectModalOpen(true);
+      return;
     }
-    // TODO: Connect to backend API
-    console.log(`Setting candidate ${candidate._id} status to ${status}`);
-    // Simulate email notification
-    alert(`Rejection email queued for ${pi.email}`);
   };
 
   const getStatusBadgeClasses = (status: string) => {
     switch (status) {
       case "accepted":
-        return "bg-green-500 text-white hover:bg-green-600 border-transparent shadow-sm";
+        return "bg-green-500 text-white-500 hover:bg-green-600 border-transparent shadow-sm";
       case "rejected":
-        return "bg-orange-500 text-white hover:bg-orange-600 border-transparent shadow-sm";
+        return "bg-orange-500 text-white-500 hover:bg-orange-600 border-transparent shadow-sm";
       default: // pending
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200";
+        return "bg-yellow-600 text-white-500 border-transparent shadow-sm hover:bg-yellow-700";
     }
   };
 
@@ -209,22 +212,21 @@ export function CandidateDetailView({
               {/* Decision Actions */}
               <div className="flex items-center bg-muted/50 p-1 rounded-md gap-1">
                 <Button
-                  variant="ghost"
                   size="sm"
-                  className="h-8 px-3 text-muted-foreground hover:text-orange-600 hover:bg-orange-50 transition-all font-medium"
+                  className="h-8 px-3 bg-orange-500 text-white-500 hover:bg-orange-600 shadow-sm transition-all font-medium"
                   onClick={() => handleStatusChange("rejected")}
                 >
-                  <X className="h-4 w-4 mr-2" />
-                  Reject
+                  <X className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Reject</span>
                 </Button>
                 <Separator orientation="vertical" className="h-4" />
                 <Button
                   size="sm"
-                  className="h-8 px-3 bg-green-600 text-white hover:bg-green-700 shadow-sm transition-all font-medium"
+                  className="h-8 px-3 bg-green-500 text-white-500 hover:bg-green-600 shadow-sm transition-all font-medium"
                   onClick={() => handleStatusChange("accepted")}
                 >
-                  <Check className="h-4 w-4 mr-2" />
-                  Accept
+                  <Check className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Accept</span>
                 </Button>
               </div>
 
@@ -276,7 +278,7 @@ export function CandidateDetailView({
                 <Badge
                   variant="outline"
                   className={`mt-2 capitalize ${getStatusBadgeClasses(
-                    candidate.status
+                    candidate.status,
                   )}`}
                 >
                   {candidate.status}
@@ -391,7 +393,9 @@ export function CandidateDetailView({
                   <div className="space-y-2">
                     <FileLink
                       label="Declaration"
-                      filePath={candidate.applicationAttachments?.declarationPdf}
+                      filePath={
+                        candidate.applicationAttachments?.declarationPdf
+                      }
                       onDownload={handleFileDownload}
                     />
                     <FileLink
@@ -439,9 +443,7 @@ export function CandidateDetailView({
                     <InfoItem
                       icon={<UserIcon className="h-4 w-4" />}
                       label="Disability"
-                      value={
-                        pi.situationDeHandicap.handicap ? "Yes" : "No"
-                      }
+                      value={pi.situationDeHandicap.handicap ? "Yes" : "No"}
                     />
                   ) : null}
                   {pi.situationDeHandicap?.typeHandicap ? (
@@ -492,8 +494,7 @@ export function CandidateDetailView({
                                     {diploma.intituleDiplome}
                                   </h4>
                                   <p className="text-muted-foreground">
-                                    {diploma.diplomeType} -{" "}
-                                    {diploma.specialite}
+                                    {diploma.diplomeType} - {diploma.specialite}
                                   </p>
                                   <div className="flex items-center gap-2 mt-2 text-sm">
                                     <Badge variant="secondary">
@@ -512,7 +513,7 @@ export function CandidateDetailView({
                                   onClick={() =>
                                     handleFileDownload(
                                       diploma.files?.diplomePdf,
-                                      "diploma.pdf"
+                                      "diploma.pdf",
                                     )
                                   }
                                 >
@@ -559,7 +560,7 @@ export function CandidateDetailView({
                               onClick={() =>
                                 handleFileDownload(
                                   lang.files?.certificatLanguePdf,
-                                  "language-certificate.pdf"
+                                  "language-certificate.pdf",
                                 )
                               }
                             >
@@ -592,11 +593,11 @@ export function CandidateDetailView({
                               const highlights = Array.isArray(exp.highlights)
                                 ? exp.highlights
                                 : typeof exp.highlights === "string"
-                                ? exp.highlights
-                                    .split("\n")
-                                    .map((item) => item.trim())
-                                    .filter(Boolean)
-                                : [];
+                                  ? exp.highlights
+                                      .split("\n")
+                                      .map((item) => item.trim())
+                                      .filter(Boolean)
+                                  : [];
 
                               return (
                                 <Card key={idx}>
@@ -672,9 +673,13 @@ export function CandidateDetailView({
                                       {exp.description}
                                     </p>
                                   ) : null}
-                                  {(exp.dateDebut || exp.dateFin || exp.ville) && (
+                                  {(exp.dateDebut ||
+                                    exp.dateFin ||
+                                    exp.ville) && (
                                     <p className="text-xs text-muted-foreground">
-                                      {exp.ville ? `Location: ${exp.ville}` : ""}
+                                      {exp.ville
+                                        ? `Location: ${exp.ville}`
+                                        : ""}
                                       {exp.ville &&
                                       (exp.dateDebut || exp.dateFin)
                                         ? " | "
@@ -731,7 +736,7 @@ export function CandidateDetailView({
                                     onClick={() =>
                                       handleFileDownload(
                                         pub.files?.publicationPdf,
-                                        "publication.pdf"
+                                        "publication.pdf",
                                       )
                                     }
                                   >
@@ -786,7 +791,7 @@ export function CandidateDetailView({
                                     onClick={() =>
                                       handleFileDownload(
                                         com.files?.communicationPdf,
-                                        "communication.pdf"
+                                        "communication.pdf",
                                       )
                                     }
                                   >
@@ -831,7 +836,7 @@ export function CandidateDetailView({
                                     onClick={() =>
                                       handleFileDownload(
                                         res.residanatPdf,
-                                        "residency.pdf"
+                                        "residency.pdf",
                                       )
                                     }
                                   >
@@ -876,7 +881,7 @@ export function CandidateDetailView({
                                     onClick={() =>
                                       handleFileDownload(
                                         doc.documentPdf,
-                                        "document.pdf"
+                                        "document.pdf",
                                       )
                                     }
                                   >
@@ -903,6 +908,12 @@ export function CandidateDetailView({
         onConfirm={handleAcceptConfirm}
         candidateName={`${pi.prenom} ${pi.nom}`}
       />
+      <RejectCandidateModal
+        isOpen={isRejectModalOpen}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleRejectConfirm}
+        candidateName={`${pi.prenom} ${pi.nom}`}
+      />
     </>
   );
 }
@@ -923,7 +934,7 @@ function AcceptCandidateModal({
   candidateName,
 }: AcceptCandidateModalProps) {
   const [invitationType, setInvitationType] = useState<"interview" | "test">(
-    "interview"
+    "interview",
   );
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState("");
@@ -984,7 +995,7 @@ function AcceptCandidateModal({
                     variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
+                      !date && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1040,10 +1051,51 @@ function AcceptCandidateModal({
           </Button>
           <Button
             onClick={handleConfirm}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-500 hover:bg-green-600 text-white-500"
             disabled={!date || !time}
           >
             Confirm & Send Invite
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- REJECT MODAL COMPONENT ---
+
+interface RejectCandidateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  candidateName: string;
+}
+
+function RejectCandidateModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  candidateName,
+}: RejectCandidateModalProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Confirm Rejection</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to reject the application for {candidateName}?
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            className="bg-orange-500 hover:bg-orange-600 text-white-500"
+          >
+            Reject Application
           </Button>
         </DialogFooter>
       </DialogContent>
