@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { BellRing, FileText } from "lucide-react"; // Importing FileText as a PDF icon
 import { cn } from "@/libs/utils";
@@ -9,12 +10,12 @@ import {
   CardFooter,
   CardTitle,
 } from "@/components/ui/card";
-import Image from "next/image";
 import { getDictionary } from "@/utils/getDictionary";
 import { ActiveTranche } from "@/types/tranche.types"; // Active tranche payload for public cards.
 import { Locale } from "@/configs/i18n";
 import Link from "next/link";
 import ApplyButton from "./ApplyButton";
+import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
 export function ConcourItem({
   className,
@@ -37,6 +38,7 @@ export function ConcourItem({
     ? tranche.endDate
     : deadlineDate.toLocaleDateString(locale); // Fallback to raw value if parsing fails.
   const detailsHref = tranche._id ? `/${locale}/concours/${tranche._id}` : ""; // Route by tranche id.
+  const imageSrc = resolveImageUrl(offer.imageUrl);
 
   return (
     <Card
@@ -47,12 +49,10 @@ export function ConcourItem({
       )}
     >
       <div className="relative w-full h-32 sm:h-48 bg-gray-100 dark:bg-gray-800 overflow-hidden shrink-0">
-        <Image
-          src={offer.imageUrl}
+        <img
+          src={imageSrc || offer.imageUrl}
           alt={offer.title[locale]}
-          fill
-          className="object-cover rounded-t-md transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="h-full w-full object-cover rounded-t-md transition-transform duration-500 group-hover:scale-105"
         />
       </div>
       <CardContent className="grid gap-2 p-3 sm:p-4 flex-1">

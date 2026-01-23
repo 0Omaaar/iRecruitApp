@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, MapPin, Users, Tag } from "lucide-react";
 import React from "react";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ApplyButton from "@/components/concours/ApplyButton";
+import { resolveImageUrl } from "@/utils/resolveImageUrl";
 
 type OfferDetailsPageProps = {
   params: { lang: Locale; id: string };
@@ -31,6 +32,7 @@ const OfferDetailsPage = async ({ params }: OfferDetailsPageProps) => {
   const deadlineLabel = Number.isNaN(deadlineDate.getTime())
     ? tranche.endDate
     : deadlineDate.toLocaleDateString(lang); // Fallback if parsing fails.
+  const imageSrc = resolveImageUrl(offer.imageUrl);
 
   return (
     <div className="max-w-screen-2xl mt-24 pb-24 px-4 sm:px-8 xl:px-16 mx-auto">
@@ -47,13 +49,10 @@ const OfferDetailsPage = async ({ params }: OfferDetailsPageProps) => {
         <div className="grid gap-8 lg:grid-cols-[1.6fr,1fr]">
           <Card className="overflow-hidden">
             <div className="relative w-full h-64 sm:h-80 bg-gray-100">
-              <Image
-                src={offer.imageUrl}
+              <img
+                src={imageSrc || offer.imageUrl}
                 alt={offer.title[lang]}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
-                priority
+                className="h-full w-full object-cover"
               />
             </div>
             <CardHeader className="space-y-3">
