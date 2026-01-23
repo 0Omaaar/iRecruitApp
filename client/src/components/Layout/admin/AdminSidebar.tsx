@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
-  FileText,
   Settings,
   LogOut,
   Shield,

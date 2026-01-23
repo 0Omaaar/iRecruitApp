@@ -444,5 +444,9 @@
         "all": "Tous"
       }
     }
+  },
+  "sessionsPage": {
+    "title": "Gestion des Sessions",
+    "subtitle": "Gérer les sessions d'offres d'emploi, les entretiens et les processus de candidature."
   }
 }
