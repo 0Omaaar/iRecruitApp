@@ -457,5 +457,23 @@
   "sessionsPage": {
     "title": "Sessions Management",
     "subtitle": "Manage job offer sessions, interviews, and application processes."
+  },
+  "createJobOfferModal": {
+    "title": "Create a New Job Offer",
+    "description": "Fill in the details below to post a new job offer.",
+    "jobTitle": "Job Title",
+    "jobDescription": "Job Description",
+    "tags": "Tags",
+    "city": "City",
+    "department": "Department",
+    "publicationDate": "Publication Date",
+    "deadline": "Application Deadline",
+    "candidates": "Number of Candidates",
+    "imageUrl": "Image URL",
+    "cancel": "Cancel",
+    "create": "Create Offer",
+    "creating": "Creating...",
+    "successMessage": "Job offer created successfully!",
+    "errorMessage": "Failed to create job offer."
   }
 }
