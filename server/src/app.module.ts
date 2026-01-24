@@ -13,6 +13,7 @@ import { JobOffersModule } from './job-offers/job-offers.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { RecruitmentSessionModule } from './recruitment-session/recruitment-session.module';
 import { TrancheModule } from './tranche/tranche.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { TrancheModule } from './tranche/tranche.module';
     ApplicationsModule,
     RecruitmentSessionModule,
     TrancheModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

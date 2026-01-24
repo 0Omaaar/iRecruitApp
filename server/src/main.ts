@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -11,8 +11,10 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
 
-  // Set a global prefix for API routes
-  app.setGlobalPrefix('api');
+  // Set a global prefix for API routes (exclude Prometheus metrics)
+  app.setGlobalPrefix('api', {
+    exclude: [{ path: 'metrics', method: RequestMethod.GET }],
+  });
 
   // Enable CORS with custom configuration
   const origins = process.env.FRONTEND;
@@ -27,6 +29,6 @@ async function bootstrap() {
   });
 
   // Start the application
-  await app.listen(process.env.PORT || 4000);
+  await app.listen(process.env.PORT || 4000, '0.0.0.0');
 }
 bootstrap();

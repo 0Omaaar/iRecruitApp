@@ -3,9 +3,6 @@ services:
   irecruit_api:
     container_name: irecruit-app-container
     build: ./server
-    volumes:
-      - ./server/src:/app/src
-      - ./server/node_modules:/app/node_modules # Make sure node_modules are also mounted
     ports:
       - "4000:4000"
     environment:
@@ -16,7 +13,6 @@ services:
       - MONGO_PASSWORD=example
       - MONGO_USER=root
       - MONGO_PORT=27017
-    command: npm run start:dev
 
   iRecruit_db:
     image: mongo
@@ -45,16 +41,65 @@ services:
     container_name: irecruit-web-container
     build: ./client
     ports:
-      - "4400:4400"
+      - "4400:3000"
     environment:
       - BACKEND_API=http://irecruit_api:4000/api # Change localhost to the service name
-      - NEXTAUTH_URL=http://localhost:4400/api/auth # Keep this as localhost if accessing from outside the container network
+      - NEXTAUTH_URL=http://localhost:4400
+      - NEXTAUTH_BASEPATH=/api/auth
       - NEXTAUTH_SECRET=Kf/ptCrcSOQv8mjKbe7qh83x5NhgA9gOuyl038ClBVk=
-      - NEXT_PUBLIC_BACKEND_API=http://irecruit_api:4000/api
+      - NEXT_PUBLIC_BACKEND_API=http://localhost:4000/api
 
     command: npm run start
     depends_on:
       - irecruit_api
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - irecruit_api
+      - node-exporter
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
 volumes:
   mongo_db:
+  grafana_data:
