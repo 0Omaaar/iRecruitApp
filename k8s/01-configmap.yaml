@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: irecruit-api-config
+data:
+  PORT: "4000"
+  FRONTEND: "http://localhost:30040"
+  MONGO_HOST: "irecruit-mongo"
+  MONGO_PORT: "27017"
+  MONGO_USER: "root"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: irecruit-web-config
+data:
+  BACKEND_API: "http://irecruit-api:4000/api"
+  NEXT_PUBLIC_BACKEND_API: "http://localhost:30080/api"
+  NEXTAUTH_URL: "http://localhost:30040"
+  NEXTAUTH_BASEPATH: "/api/auth"

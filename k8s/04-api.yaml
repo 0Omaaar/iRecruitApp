@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: irecruit-api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: irecruit-api
+  template:
+    metadata:
+      labels:
+        app: irecruit-api
+    spec:
+      containers:
+        - name: api
+          image: irecruit-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: irecruit-api-config
+            - secretRef:
+                name: irecruit-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: irecruit-api
+spec:
+  selector:
+    app: irecruit-api
+  ports:
+    - name: http
+      port: 4000
+      targetPort: 4000
+      nodePort: 30080
+  type: NodePort
