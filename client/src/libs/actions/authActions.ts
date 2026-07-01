@@ -73,6 +73,7 @@ export async function sendVerificationLink(formData: any) {
       },
     };
   } catch (error: any) {
+    console.error("Error sending verification link", error);
     switch (error.status) {
       case 404:
         return {
