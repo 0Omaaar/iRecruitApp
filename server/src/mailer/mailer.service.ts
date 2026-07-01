@@ -1,5 +1,10 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import * as Brevo from '@getbrevo/brevo';
 import { ConfigService } from '@nestjs/config';
 
@@ -9,11 +14,19 @@ export class MailerService {
   private readonly logger = new Logger(MailerService.name);
 
   constructor(private configService: ConfigService) {
+    const apiKey = this.configService.get<string>('BREVO_API_KEY')?.trim();
+
     this.apiInstance = new Brevo.TransactionalEmailsApi();
+
+    if (!apiKey) {
+      this.logger.error('BREVO_API_KEY is missing from server configuration.');
+      return;
+    }
+
     // Configure API key authorization: api-key
     this.apiInstance.setApiKey(
       Brevo.TransactionalEmailsApiApiKeys.apiKey,
-      this.configService.get<string>('BREVO_API_KEY'),
+      apiKey,
     );
   }
 
@@ -24,6 +37,14 @@ export class MailerService {
    * @param htmlContent HTML content of the email
    */
   async sendEmail(to: string, subject: string, htmlContent: string) {
+    const apiKey = this.configService.get<string>('BREVO_API_KEY')?.trim();
+
+    if (!apiKey) {
+      throw new InternalServerErrorException(
+        'Email service is not configured. Missing BREVO_API_KEY.',
+      );
+    }
+
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
 
     sendSmtpEmail.subject = subject;
@@ -41,11 +62,27 @@ export class MailerService {
       );
       return data;
     } catch (error) {
+      const status = error?.response?.status || error?.status;
+      const providerMessage =
+        error?.response?.body?.message ||
+        error?.response?.data?.message ||
+        error?.body?.message ||
+        error?.message;
+
       this.logger.error(
         `Error sending email to ${to}:`,
-        error.body || error.message,
+        providerMessage,
       );
-      throw error;
+
+      if (status === 401) {
+        throw new BadGatewayException(
+          'Brevo rejected the email request. Check BREVO_API_KEY.',
+        );
+      }
+
+      throw new BadGatewayException(
+        providerMessage || 'Email provider failed to send the email.',
+      );
     }
   }
 

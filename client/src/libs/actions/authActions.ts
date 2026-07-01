@@ -1,20 +1,20 @@
 "use server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AuthError } from "next-auth";
-import { signIn, signOut } from "../auth";
+import {AuthError} from "next-auth";
+import {signIn, signOut} from "../auth";
 import axios from "axios";
 
 // Login action
 export async function authenticate(formData: any) {
   try {
-    const { redirectTo, ...credentials } = formData || {};
+    const {redirectTo, ...credentials} = formData || {};
     await signIn("credentials", {
       ...credentials,
       redirectTo: redirectTo || "/",
     });
 
-    return { success: true };
+    return {success: true};
   } catch (error) {
     if (error instanceof AuthError) {
       console.error("Authenticated failed !", error);
@@ -55,7 +55,7 @@ export async function sendVerificationLink(formData: any) {
       {
         email: formData.email,
         username: formData.username,
-      }
+      },
     );
 
     return {
@@ -135,6 +135,7 @@ export async function createPassword(code: string, password: string) {
       data: res.data,
     };
   } catch (error: any) {
+    console.error("Error creating password", error);
     switch (error.status) {
       case 404:
         return {
@@ -167,7 +168,7 @@ export async function createPassword(code: string, password: string) {
 export async function sendResetLink(email: string) {
   try {
     const res = await axios.get(
-      `${process.env.BACKEND_API}/auth/reset/${email}`
+      `${process.env.BACKEND_API}/auth/reset/${email}`,
     );
 
     return {
@@ -190,7 +191,7 @@ export async function updatePassword(code: string, newPassword: string) {
       {
         code,
         newPassword,
-      }
+      },
     );
 
     return {
